@@ -366,4 +366,37 @@ class EntryRepository {
 
 		return $wpdb->get_results($sql, ARRAY_A) ?: [];
 	}
+
+	public function get_weekly_report_entries(int $incomplete_min_age_hours = 24): array {
+		global $wpdb;
+
+		$problem_statuses      = weekly_report_final_problem_statuses();
+		$incomplete_statuses   = weekly_report_incomplete_statuses();
+		$problem_placeholders  = implode(',', array_fill(0, count($problem_statuses), '%s'));
+		$incomplete_placeholders = implode(',', array_fill(0, count($incomplete_statuses), '%s'));
+		$threshold             = gmdate('Y-m-d H:i:s', time() - ($incomplete_min_age_hours * HOUR_IN_SECONDS));
+
+		$sql = $wpdb->prepare(
+			'SELECT state.*, items.created_at AS entry_created_at
+			FROM ' . state_table_name() . ' state
+			LEFT JOIN ' . $wpdb->prefix . 'frm_items items ON items.id = state.entry_id
+			WHERE state.payment_status IN (' . $problem_placeholders . ')
+				OR (state.payment_status IN (' . $incomplete_placeholders . ') AND state.payment_updated_at <= %s)
+			ORDER BY state.payment_updated_at ASC',
+			[...$problem_statuses, ...$incomplete_statuses, $threshold]
+		);
+
+		$rows = $wpdb->get_results($sql, ARRAY_A) ?: [];
+		$config = get_config();
+		$applicant_name_field_id = (int) ($config['applicant_name_fid'] ?? 0);
+
+		foreach ($rows as &$row) {
+			$row['applicant_name'] = $applicant_name_field_id > 0
+				? $this->get_entry_meta_value((int) $row['entry_id'], $applicant_name_field_id)
+				: '';
+		}
+		unset($row);
+
+		return $rows;
+	}
 }

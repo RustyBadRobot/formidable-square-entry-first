@@ -114,13 +114,34 @@ class Plugin {
 		dbDelta($audit_sql);
 		add_option(OPTION_KEY, default_settings());
 
+		add_filter(
+			'cron_schedules',
+			static function (array $schedules): array {
+				$schedules['frm_square_hc_every_fifteen'] = [
+					'interval' => 15 * MINUTE_IN_SECONDS,
+					'display'  => __('Every 15 Minutes (Formidable Square Hosted Checkout)', 'frm-square-hosted-checkout'),
+				];
+				$schedules['frm_square_hc_weekly'] = [
+					'interval' => WEEK_IN_SECONDS,
+					'display'  => __('Weekly (Formidable Square Hosted Checkout)', 'frm-square-hosted-checkout'),
+				];
+
+				return $schedules;
+			}
+		);
+
 		if (! wp_next_scheduled(CRON_HOOK)) {
 			wp_schedule_event(time() + 300, 'frm_square_hc_every_fifteen', CRON_HOOK);
+		}
+
+		if (! wp_next_scheduled(WEEKLY_REPORT_CRON_HOOK)) {
+			wp_schedule_event(time() + HOUR_IN_SECONDS, 'frm_square_hc_weekly', WEEKLY_REPORT_CRON_HOOK);
 		}
 	}
 
 	public static function deactivate(): void {
 		wp_clear_scheduled_hook(CRON_HOOK);
+		wp_clear_scheduled_hook(WEEKLY_REPORT_CRON_HOOK);
 	}
 
 	public function handle_formidable_entry_created(int $entry_id, int $form_id): void {

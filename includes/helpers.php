@@ -13,6 +13,7 @@ const STATE_TABLE = 'frm_square_entry_state';
 const AUDIT_TABLE = 'frm_square_audit_log';
 const COOKIE_PREFIX = 'frm_square_hc_token_';
 const CRON_HOOK = 'frm_square_hc_reconcile';
+const WEEKLY_REPORT_CRON_HOOK = 'frm_square_hc_weekly_report';
 const REST_NAMESPACE = 'frm-square/v1';
 
 function default_settings(): array {
@@ -28,6 +29,7 @@ function default_settings(): array {
 		'success_url'               => '',
 		'cancel_url'                => '',
 		'access_token_ttl_minutes'  => 1440,
+		'weekly_report_recipients'  => '',
 	];
 }
 
@@ -97,6 +99,21 @@ function retryable_statuses(): array {
 
 function final_statuses(): array {
 	return ['succeeded', 'refunded', 'partially_refunded', 'failed', 'abandoned'];
+}
+
+function weekly_report_final_problem_statuses(): array {
+	return ['failed', 'abandoned'];
+}
+
+function weekly_report_incomplete_statuses(): array {
+	return ['pending', 'checkout_created', 'awaiting_payment', 'processing'];
+}
+
+function parse_email_recipients(string $recipients): array {
+	$emails = array_map('trim', explode(',', $recipients));
+	$emails = array_filter($emails, static fn (string $email): bool => $email !== '' && is_email($email));
+
+	return array_values(array_unique($emails));
 }
 
 function current_time_mysql(): string {

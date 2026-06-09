@@ -19,6 +19,7 @@ Core flow:
 3. Payment page shortcode validates entry key + token and creates a Square hosted checkout link on demand.
 4. Square webhooks update payment and refund state asynchronously.
 5. WP-Cron marks stale entries as abandoned and reconciles uncertain states.
+6. WP-Cron emails a weekly failed/incomplete payment report to the configured recipients.
 
 == Installation ==
 
@@ -30,6 +31,7 @@ Core flow:
    - Square environment
    - Square webhook signature key
    - default currency
+   - weekly report recipients, if failed/incomplete payment reports should be emailed
    - success URL
    - cancel URL
 4. Create a WordPress page for the payment step and place:
@@ -107,6 +109,13 @@ Declined or failed checkout:
 2. Confirm the entry remains saved.
 3. Confirm webhook or reconciliation updates the state to `failed`.
 4. Confirm retry generates a fresh checkout link.
+
+Weekly reporting:
+
+1. Add one or more comma-separated email addresses in `Settings > Formidable Square Checkout > Weekly Report Recipients`.
+2. Create or leave test entries in `failed`, `abandoned`, or an incomplete payment state older than 24 hours.
+3. Run the `frm_square_hc_weekly_report` cron hook.
+4. Confirm the recipients receive a report with entry links, applicant names, statuses, amounts, update times, and Square IDs.
 
 Webhook processing:
 

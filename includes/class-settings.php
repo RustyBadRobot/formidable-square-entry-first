@@ -54,6 +54,7 @@ class Settings {
 			'access_token_ttl_minutes' => __('Public Token TTL (minutes)', 'frm-square-hosted-checkout'),
 			'success_url'           => __('Success URL', 'frm-square-hosted-checkout'),
 			'cancel_url'            => __('Cancel / Return URL', 'frm-square-hosted-checkout'),
+			'weekly_report_recipients' => __('Weekly Report Recipients', 'frm-square-hosted-checkout'),
 			'enable_logging'        => __('Enable Logging', 'frm-square-hosted-checkout'),
 		];
 
@@ -81,6 +82,7 @@ class Settings {
 		$output['access_token_ttl_minutes'] = max(15, absint($input['access_token_ttl_minutes'] ?? 1440));
 		$output['success_url']              = esc_url_raw($input['success_url'] ?? '');
 		$output['cancel_url']               = esc_url_raw($input['cancel_url'] ?? '');
+		$output['weekly_report_recipients'] = implode(', ', parse_email_recipients((string) ($input['weekly_report_recipients'] ?? '')));
 		$output['enable_logging']           = empty($input['enable_logging']) ? 0 : 1;
 
 		$secrets = [
@@ -149,6 +151,10 @@ class Settings {
 
 		if ($key === 'cancel_url') {
 			echo '<p class="description">' . esc_html__('Webhook URL:', 'frm-square-hosted-checkout') . ' <code>' . esc_html(rest_webhook_url()) . '</code></p>';
+		}
+
+		if ($key === 'weekly_report_recipients') {
+			echo '<p class="description">' . esc_html__('Comma-separated email addresses that should receive the weekly failed and incomplete payment report.', 'frm-square-hosted-checkout') . '</p>';
 		}
 	}
 
